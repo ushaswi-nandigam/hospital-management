@@ -1,232 +1,314 @@
-# Hospital Management System
+# 🏥 Hospital Management System
 
-A comprehensive hospital management platform with patient records, appointment scheduling, billing, and doctor consultations using modern web technologies.
+A full-stack hospital management platform built with **React + Vite** on the frontend and **Node.js + Express + MongoDB** on the backend. It supports three distinct user roles — **Admin**, **Doctor**, and **Patient** — each with their own dashboard and functionality.
 
-## 🏥 Features
+---
 
-- **Patient Management**: Complete medical profiles with history
-- **Appointment Scheduling**: Easy booking with available doctors
-- **Billing System**: Invoice generation and payment tracking
-- **Prescriptions**: Digital prescription management
-- **Doctor Dashboard**: Patient appointments and consultations
-- **Admin Dashboard**: Hospital operations and staff scheduling
-- **Role-Based Access**: Separate interfaces for Patients, Doctors, and Admins
-- **Responsive Design**: Works on desktop and mobile devices
+## ✨ Features
+
+### 🧑‍⚕️ Patient
+- Register and log in securely
+- Book appointments with available, approved doctors
+- View and cancel appointments
+- Track billing & invoices
+- Manage medical profile (blood group, allergies, emergency contact)
+
+### 👨‍⚕️ Doctor
+- Register and await admin approval before gaining access
+- View all appointments (scheduled, completed, cancelled)
+- Mark appointments as **Completed**, **Cancelled**, or **No-Show** inline
+- See live **availability status** set by admin
+- View upcoming schedule
+
+### 🛡️ Admin
+- View hospital-wide statistics (patients, doctors, appointments, revenue)
+- **Approve or Reject** newly registered doctors
+- **Control doctor availability** (Available / Busy / On Leave) via dropdown
+- View and manage **all appointments** across the hospital
+- Create and manage **patient invoices**; mark invoices as paid
+- View billing history
+
+---
 
 ## 🛠️ Tech Stack
 
-**Frontend:**
-- React 18 with Vite
-- Tailwind CSS for styling
-- Zustand for state management
-- React Router for navigation
-- Axios for API communication
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, Vite, Tailwind CSS |
+| State Management | Zustand |
+| Routing | React Router v6 |
+| HTTP Client | Axios |
+| Backend | Node.js, Express.js |
+| Database | MongoDB (via official Node.js driver v6) |
+| Authentication | JWT (JSON Web Tokens) |
+| Password Hashing | bcryptjs |
 
-**Backend:**
-- Node.js with Express.js
-- PostgreSQL database
-- JWT authentication
-- Role-based authorization
+---
 
 ## 🚀 Quick Start
 
 ### Prerequisites
-- Node.js 16+ and npm
-- PostgreSQL 12+
-- Git
+- **Node.js** 18+ and npm
+- **MongoDB** running locally or a MongoDB Atlas connection string
+- **Git**
 
-### Installation & Setup
+---
 
-#### 1. Install Dependencies
+### 1. Clone the repository
 
 ```bash
-# Backend dependencies
+git clone https://github.com/ushaswi-nandigam/hospital-management.git
+cd hospital-management
+```
+
+---
+
+### 2. Configure Environment Variables
+
+Create a `.env` file inside the `server/` directory:
+
+```env
+MONGODB_URI=mongodb://localhost:27017
+MONGODB_DB=hospital_management
+JWT_SECRET=your_super_secret_key
+PORT=5000
+```
+
+> A template is provided at `.env.example` in the project root.
+
+---
+
+### 3. Install Dependencies
+
+```bash
+# Install backend dependencies
 cd server
 npm install
 
-# Frontend dependencies
+# Install frontend dependencies
 cd ../client
 npm install
 ```
 
-#### 2. Database Setup
+---
+
+### 4. Seed the Database
+
+Run the seed script to populate initial admin, doctor, and patient accounts:
 
 ```bash
-# Create PostgreSQL database
-createdb hospital_management
-
-# Initialize schema (in server directory)
-psql -d hospital_management -f db/init.sql
-
-# Seed demo data
+cd server
 npm run seed
 ```
 
-#### 3. Environment Variables
+---
 
-Create `.env` file in the `server` directory:
-```
-DATABASE_URL=postgresql://localhost/hospital_management
-NODE_ENV=development
-PORT=5000
-JWT_SECRET=dev_secret_key
-```
+### 5. Run the Application
 
-#### 4. Run Development Servers
+#### Option A — One-click (Windows)
+Double-click `run-project.bat` in the project root. It starts both the backend and frontend automatically.
 
-**Terminal 1 - Backend:**
+#### Option B — Manual (two terminals)
+
+**Terminal 1 — Backend:**
 ```bash
 cd server
 npm run dev
-# Backend runs on http://localhost:5000
+# Runs on http://localhost:5000
 ```
 
-**Terminal 2 - Frontend:**
+**Terminal 2 — Frontend:**
 ```bash
 cd client
 npm run dev
-# Frontend runs on http://localhost:5173
+# Runs on http://localhost:5173
 ```
 
-## 📝 Demo Credentials
+Open your browser at **http://localhost:5173**
 
-After seeding the database:
+---
+
+## 🔐 Demo Credentials
 
 | Role | Email | Password |
 |------|-------|----------|
-| Admin | admin@hospital.com | password |
-| Doctor | doctor1@hospital.com | password |
-| Patient | patient1@hospital.com | password |
+| **Admin** | admin@hospital.com | Admin@123 |
+| **Doctor** | john.smith@hospital.com | Doctor@123 |
+| **Doctor** | sarah.johnson@hospital.com | Doctor@123 |
+| **Doctor** | michael.brown@hospital.com | Doctor@123 |
+| **Doctor** | emily.davis@hospital.com | Doctor@123 |
+| **Doctor** | robert.wilson@hospital.com | Doctor@123 |
+| **Patient** | alice.thompson@gmail.com | Patient@123 |
+| **Patient** | james.anderson@gmail.com | Patient@123 |
+
+> All seeded doctors are pre-approved. Newly registered doctors start with **pending** status and must be approved by the admin.
+
+---
 
 ## 📁 Project Structure
 
 ```
 hospital-management/
-├── client/                 # React Vite frontend
+├── client/                      # React + Vite frontend
 │   ├── src/
-│   │   ├── pages/         # Page components
-│   │   ├── components/    # Reusable components
-│   │   ├── store/         # Zustand state management
-│   │   ├── api/           # API utilities
-│   │   └── index.css      # Tailwind styles
-│   └── vite.config.js
-├── server/                 # Node.js Express backend
-│   ├── db/                # Database config & migrations
-│   ├── routes/            # API routes
-│   ├── controllers/       # Business logic
-│   ├── middleware/        # Auth & validation
-│   └── index.js           # Entry point
-├── .env.example           # Environment template
+│   │   ├── api/
+│   │   │   └── index.js         # Axios API client & all API calls
+│   │   ├── pages/
+│   │   │   ├── LoginPage.jsx
+│   │   │   ├── RegisterPage.jsx
+│   │   │   ├── PatientDashboard.jsx
+│   │   │   ├── PatientAppointments.jsx
+│   │   │   ├── AppointmentBooking.jsx
+│   │   │   ├── BillingPage.jsx
+│   │   │   ├── ProfilePage.jsx
+│   │   │   ├── DoctorDashboard.jsx
+│   │   │   ├── DoctorAppointments.jsx
+│   │   │   └── AdminDashboard.jsx
+│   │   ├── store/
+│   │   │   └── index.js         # Zustand auth store
+│   │   ├── App.jsx              # Routes & protected route guard
+│   │   ├── main.jsx
+│   │   └── index.css            # Tailwind + custom design tokens
+│   ├── vite.config.js
+│   └── tailwind.config.js
+│
+├── server/                      # Node.js + Express backend
+│   ├── controllers/
+│   │   ├── authController.js
+│   │   ├── adminController.js
+│   │   ├── doctorController.js
+│   │   ├── patientController.js
+│   │   ├── appointmentController.js
+│   │   └── billingController.js
+│   ├── routes/
+│   │   ├── authRoutes.js
+│   │   ├── adminRoutes.js
+│   │   ├── doctorRoutes.js
+│   │   ├── patientRoutes.js
+│   │   ├── appointmentRoutes.js
+│   │   └── billingRoutes.js
+│   ├── middleware/
+│   │   └── authMiddleware.js    # JWT verify, requireRole, requireDoctorApproval
+│   ├── db/
+│   │   └── config.js            # MongoDB connection & indexes
+│   ├── scripts/
+│   │   └── seed.js              # Database seeder
+│   └── index.js                 # Express app entry point
+│
+├── run-project.bat              # One-click launcher (Windows)
+├── .env.example                 # Environment template
 └── README.md
 ```
 
-## 🎯 Core Features
+---
 
-### Patient Dashboard
-- View upcoming appointments
-- Book new appointments with doctors
-- Access billing and invoices
-- Manage medical profile
-- View medical history
+## 🔒 API Reference
 
-### Doctor Dashboard
-- See scheduled appointments
-- View patient information
-- Manage appointment status
-- Access patient medical records
-- Create prescriptions
+### Authentication
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/api/auth/register` | Public | Register a new user |
+| POST | `/api/auth/login` | Public | Login and receive JWT |
 
-### Admin Dashboard
-- Hospital statistics
-- Staff scheduling
-- Resource allocation
-- Billing overview
-- System monitoring
+### Patients
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/patients` | Doctor/Admin | List all patients |
+| GET | `/api/patients/:id` | Self/Admin | Get patient profile |
+| PUT | `/api/patients/:id` | Self | Update patient profile |
+| GET | `/api/patients/:id/appointments` | Self | Patient's appointments |
+| GET | `/api/patients/:id/medical-history` | Self/Doctor | Medical records |
 
-## 🔒 API Endpoints
+### Doctors
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/doctors` | All | List all doctors |
+| GET | `/api/doctors/:id` | All | Get doctor profile |
+| GET | `/api/doctors/:id/appointments` | Doctor/Admin | Doctor's appointments |
+| GET | `/api/doctors/:id/schedule` | Doctor | Upcoming schedule |
+| PUT | `/api/doctors/:id` | Doctor/Admin | Update doctor profile |
 
-**Authentication:**
-- `POST /api/auth/register` - Create new account
-- `POST /api/auth/login` - Login user
-- `POST /api/auth/logout` - Logout
+### Appointments
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/appointments` | All (filtered) | List appointments |
+| POST | `/api/appointments` | Patient | Book an appointment |
+| PUT | `/api/appointments/:id/status` | Doctor/Admin | Update status |
+| DELETE | `/api/appointments/:id` | Any | Cancel appointment |
 
-**Patients:**
-- `GET /api/patients` - List all patients (doctor/admin)
-- `GET /api/patients/:id` - Get patient details
-- `PUT /api/patients/:id` - Update patient profile
-- `GET /api/patients/:id/medical-history` - Medical records
-- `GET /api/patients/:id/appointments` - Patient appointments
+### Billing
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/billing` | All | List invoices |
+| GET | `/api/billing/:id` | All | Get invoice |
+| POST | `/api/billing` | Admin | Create invoice |
+| PUT | `/api/billing/:id/status` | Admin | Mark paid/overdue |
+| GET | `/api/billing/patient/:id` | Self/Admin | Patient billing |
 
-**Doctors:**
-- `GET /api/doctors` - List all doctors
-- `GET /api/doctors/:id` - Doctor details
-- `GET /api/doctors/:id/appointments` - Doctor's appointments
+### Admin
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| GET | `/api/admin/dashboard` | Admin | System statistics |
+| GET | `/api/admin/staff-schedule` | Admin | Doctor roster |
+| PUT | `/api/admin/staff-schedule` | Admin | Update doctor availability |
+| GET | `/api/admin/pending-doctors` | Admin | Pending approval list |
+| POST | `/api/admin/approve-doctor` | Admin | Approve or reject doctor |
 
-**Appointments:**
-- `GET /api/appointments` - List appointments
-- `POST /api/appointments` - Book appointment
-- `PUT /api/appointments/:id/status` - Update status
-- `DELETE /api/appointments/:id` - Cancel appointment
+---
 
-**Billing:**
-- `GET /api/billing` - List invoices
-- `POST /api/billing` - Create invoice
-- `PUT /api/billing/:id/status` - Update invoice status
+## 🗄️ Database Collections
 
-**Admin:**
-- `GET /api/admin/dashboard` - Dashboard stats
-- `GET /api/admin/staff-schedule` - Staff info
-- `PUT /api/admin/staff-schedule` - Update staff availability
+| Collection | Description |
+|------------|-------------|
+| `users` | Authentication store — all roles share this |
+| `doctors` | Doctor-specific data (specialization, license, availability) |
+| `patients` | Patient-specific data (blood group, allergies, history) |
+| `appointments` | Appointment records linking doctors ↔ patients |
+| `invoices` | Billing records linked to patients |
+| `prescriptions` | Doctor-issued prescriptions |
+
+> `users._id` is the shared key. `doctors.user_id` and `patients.user_id` foreign-key back to `users._id`.
+
+---
 
 ## 🐛 Troubleshooting
 
-### Backend won't connect to database
+### MongoDB won't connect
+- Ensure MongoDB is running: `mongod` or check your Atlas URI
+- Confirm `MONGODB_URI` is set correctly in `server/.env`
+
+### "Port already in use" error
 ```bash
-# Check PostgreSQL is running
-psql --version
-
-# Create database if not exists
-createdb hospital_management
-
-# Run migrations
-psql -d hospital_management -f server/db/init.sql
+# Find and kill the process on port 5000
+netstat -ano | findstr :5000
+taskkill /PID <PID> /F
 ```
 
-### CORS errors
-- Frontend runs on `http://localhost:5173`
-- Backend runs on `http://localhost:5000`
+### Doctor dashboard shows "pending approval"
+- Log in as Admin → **Doctor Approvals** tab → Approve the doctor
+- The doctor dashboard polls the DB directly on each load, so status reflects immediately after refresh
+
+### CORS errors in browser
+- Frontend must run on `http://localhost:5173`
+- Backend must run on `http://localhost:5000`
 - CORS is configured in `server/index.js`
 
-### npm install fails
-```bash
-# Clear cache and reinstall
-npm cache clean --force
-rm -rf node_modules package-lock.json
-npm install
-```
+---
 
-## 📦 Building for Production
+## 📦 Production Build
 
 ```bash
 # Build frontend
 cd client
 npm run build
 
-# Build backend (if needed)
+# Start backend in production mode
 cd ../server
-npm run build
-
-# Start production server
 npm start
 ```
 
-## 🤝 Contributing
-
-1. Create a feature branch: `git checkout -b feature/your-feature`
-2. Make changes and test locally
-3. Commit: `git commit -m "Add your feature"`
-4. Push: `git push origin feature/your-feature`
+---
 
 ## 📄 License
 
-MIT License - feel free to use this project for learning and commercial purposes.
+MIT License — free to use for learning and commercial purposes.
