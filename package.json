@@ -1,0 +1,23 @@
+{
+  "name": "hospital-management-system",
+  "version": "1.0.0",
+  "description": "Hospital Management System - Manages patient records, appointments, and billing",
+  "type": "module",
+  "main": "server/index.js",
+  "scripts": {
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "cd server && node --watch index.js",
+    "dev:client": "cd client && vite",
+    "build": "cd client && vite build",
+    "build:server": "cd server && npm run build",
+    "preview": "cd client && vite preview",
+    "start": "node server/index.js",
+    "test": "vitest",
+    "lint": "eslint .",
+    "seed": "cd server && node scripts/seed.js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "concurrently": "^8.2.1"
+  }
+}
