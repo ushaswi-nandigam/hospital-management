@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './store/index.js';
 
+import LandingPage from './pages/LandingPage.jsx';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import PatientDashboard from './pages/PatientDashboard.jsx';
@@ -35,19 +36,7 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
 
-        <Route
-          path="/"
-          element={
-            isAuthenticated ? (
-              user?.role === 'patient' ? <Navigate to="/patient" /> :
-              user?.role === 'doctor' ? <Navigate to="/doctor" /> :
-              user?.role === 'admin' ? <Navigate to="/admin" /> :
-              <Navigate to="/login" />
-            ) : (
-              <Navigate to="/login" />
-            )
-          }
-        />
+        <Route path="/" element={<LandingPage />} />
 
         <Route
           path="/patient"
