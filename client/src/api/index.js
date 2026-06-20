@@ -73,4 +73,12 @@ export const adminAPI = {
   approveDoctorRequest: (data) => api.post('/admin/approve-doctor', data),
 };
 
+export const leaveAPI = {
+  applyLeave: (data) => api.post('/leave/apply', data),
+  getMyLeaveRequests: () => api.get('/leave/my'),
+  getPendingLeaveRequests: () => api.get('/leave/pending'),
+  getAllLeaveRequests: () => api.get('/leave/all'),
+  approveLeaveRequest: (id, data) => api.put(`/leave/${id}/approve`, data),
+};
+
 export default api;

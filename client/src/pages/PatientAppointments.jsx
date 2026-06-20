@@ -8,6 +8,8 @@ export default function PatientAppointments() {
   const { user, logout } = useAuthStore();
   const [appointments, setAppointments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [cancelModal, setCancelModal] = useState({ open: false, appointmentId: null });
+  const [cancelReason, setCancelReason] = useState('');
 
   useEffect(() => {
     const fetchAppointments = async () => {
@@ -23,14 +25,22 @@ export default function PatientAppointments() {
     fetchAppointments();
   }, [user.id]);
 
-  const handleCancel = async (appointmentId) => {
-    if (window.confirm('Are you sure you want to cancel this appointment?')) {
-      try {
-        await appointmentAPI.cancelAppointment(appointmentId);
-        setAppointments(appointments.filter((a) => a.id !== appointmentId));
-      } catch (error) {
-        alert('Failed to cancel appointment');
-      }
+  const handleCancel = async () => {
+    if (!cancelReason.trim()) {
+      alert('Please provide a reason for cancellation.');
+      return;
+    }
+    try {
+      await appointmentAPI.cancelAppointment(cancelModal.appointmentId, { cancellationReason: cancelReason.trim() });
+      setAppointments(
+        appointments.map((a) =>
+          a.id === cancelModal.appointmentId ? { ...a, status: 'cancelled', cancellation_reason: cancelReason.trim() } : a
+        )
+      );
+      setCancelModal({ open: false, appointmentId: null });
+      setCancelReason('');
+    } catch (error) {
+      alert(error.response?.data?.error || 'Failed to cancel appointment');
     }
   };
 
@@ -98,11 +108,21 @@ export default function PatientAppointments() {
                     <strong>Time:</strong> {new Date(appointment.appointment_date).toLocaleTimeString()}
                   </p>
                   {appointment.notes && <p><strong>Notes:</strong> {appointment.notes}</p>}
+                  {appointment.status === 'completed' && appointment.summary && (
+                    <p className="text-green-700 bg-green-50 p-2 rounded">
+                      <strong>Summary:</strong> {appointment.summary}
+                    </p>
+                  )}
+                  {appointment.status === 'cancelled' && appointment.cancellation_reason && (
+                    <p className="text-red-700 bg-red-50 p-2 rounded">
+                      <strong>Reason for cancellation:</strong> {appointment.cancellation_reason}
+                    </p>
+                  )}
                 </div>
 
                 {appointment.status === 'scheduled' && (
                   <button
-                    onClick={() => handleCancel(appointment.id)}
+                    onClick={() => { setCancelModal({ open: true, appointmentId: appointment.id }); setCancelReason(''); }}
                     className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
                   >
                     Cancel Appointment
@@ -123,6 +143,54 @@ export default function PatientAppointments() {
           </div>
         )}
       </main>
+
+      {/* Cancel Appointment Modal */}
+      {cancelModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Cancel Appointment</h3>
+              <button
+                onClick={() => setCancelModal({ open: false, appointmentId: null })}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Reason for Cancellation *</label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="input-field"
+                  rows="4"
+                  placeholder="Please explain why you want to cancel..."
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCancelModal({ open: false, appointmentId: null })}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleCancel}
+                  disabled={!cancelReason.trim()}
+                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition disabled:opacity-50"
+                >
+                  Confirm Cancellation
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

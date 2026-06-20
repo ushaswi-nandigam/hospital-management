@@ -116,30 +116,42 @@ export default function PatientDashboard() {
               {appointments.map((apt) => (
                 <div
                   key={apt.id}
-                  className="flex items-center justify-between p-4 border border-gray-200 rounded-lg"
+                  className="p-4 border border-gray-200 rounded-lg"
                 >
-                  <div>
-                    <p className="font-medium">
-                      Dr. {apt.doctor_first_name} {apt.doctor_last_name}
-                    </p>
-                    <p className="text-sm text-gray-600">{apt.specialization}</p>
-                    <p className="text-sm text-gray-500">
-                      {new Date(apt.appointment_date).toLocaleDateString()}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-medium">
+                        Dr. {apt.doctor_first_name} {apt.doctor_last_name}
+                      </p>
+                      <p className="text-sm text-gray-600">{apt.specialization}</p>
+                      <p className="text-sm text-gray-500">
+                        {new Date(apt.appointment_date).toLocaleDateString()}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <span
+                        className={`px-3 py-1 rounded text-sm font-medium ${
+                          apt.status === 'scheduled'
+                            ? 'bg-blue-100 text-blue-800'
+                            : apt.status === 'completed'
+                            ? 'bg-green-100 text-green-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {apt.status}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span
-                      className={`px-3 py-1 rounded text-sm font-medium ${
-                        apt.status === 'scheduled'
-                          ? 'bg-blue-100 text-blue-800'
-                          : apt.status === 'completed'
-                          ? 'bg-green-100 text-green-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
-                    >
-                      {apt.status}
-                    </span>
-                  </div>
+                  {apt.status === 'completed' && apt.summary && (
+                    <p className="text-xs text-green-700 mt-2 bg-green-50 p-2 rounded">
+                      Summary: {apt.summary}
+                    </p>
+                  )}
+                  {apt.status === 'cancelled' && apt.cancellation_reason && (
+                    <p className="text-xs text-red-700 mt-2 bg-red-50 p-2 rounded">
+                      Reason: {apt.cancellation_reason}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>

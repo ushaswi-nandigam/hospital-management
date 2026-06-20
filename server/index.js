@@ -8,6 +8,7 @@ import doctorRoutes from './routes/doctorRoutes.js';
 import appointmentRoutes from './routes/appointmentRoutes.js';
 import billingRoutes from './routes/billingRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import leaveRoutes from './routes/leaveRoutes.js';
 
 dotenv.config();
 
@@ -38,6 +39,7 @@ app.use('/api/doctors', doctorRoutes);
 app.use('/api/appointments', appointmentRoutes);
 app.use('/api/billing', billingRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/leave', leaveRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

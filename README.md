@@ -15,18 +15,28 @@ A full-stack hospital management platform built with **React + Vite** on the fro
 
 ### 👨‍⚕️ Doctor
 - Register and await admin approval before gaining access
-- View all appointments (scheduled, completed, cancelled)
-- Mark appointments as **Completed**, **Cancelled**, or **No-Show** inline
+- View all appointments with **status filters** (Scheduled / Completed / Cancelled)
+- Mark appointments as **Completed** (mandatory summary) or **Cancelled** (mandatory reason)
 - See live **availability status** set by admin
 - View upcoming schedule
+- **Apply for leave** — submit leave requests to admin for approval
+- View **leave request history** and status (approved / rejected / pending)
 
 ### 🛡️ Admin
 - View hospital-wide statistics (patients, doctors, appointments, revenue)
 - **Approve or Reject** newly registered doctors
 - **Control doctor availability** (Available / Busy / On Leave) via dropdown
 - View and manage **all appointments** across the hospital
+- View doctor's **summary** (completed appointments) and **cancellation reason** (cancelled appointments)
+- Cancel appointments with a **mandatory reason** (visible to doctor and patient)
+- **Approve or Reject doctor leave requests** — automatically sets doctor availability to "On Leave"
 - Create and manage **patient invoices**; mark invoices as paid
 - View billing history
+
+### 🧑‍⚕️ Patient
+- View **summary** of completed appointments
+- View **cancellation reason** for cancelled appointments (regardless of who cancelled)
+- Cancel own appointments with a **mandatory reason**
 
 ---
 
@@ -133,13 +143,15 @@ Open your browser at **http://localhost:5173**
 | Role | Email | Password |
 |------|-------|----------|
 | **Admin** | admin@hospital.com | Admin@123 |
-| **Doctor** | john.smith@hospital.com | Doctor@123 |
-| **Doctor** | sarah.johnson@hospital.com | Doctor@123 |
-| **Doctor** | michael.brown@hospital.com | Doctor@123 |
-| **Doctor** | emily.davis@hospital.com | Doctor@123 |
-| **Doctor** | robert.wilson@hospital.com | Doctor@123 |
-| **Patient** | alice.thompson@gmail.com | Patient@123 |
-| **Patient** | james.anderson@gmail.com | Patient@123 |
+| **Doctor** | doctor1@email.com | Doctor@123 |
+| **Doctor** | doctor2@email.com | Doctor@123 |
+| **Doctor** | doctor3@email.com | Doctor@123 |
+| **Doctor** | doctor4@email.com | Doctor@123 |
+| **Doctor** | doctor5@email.com | Doctor@123 |
+| **Patient** | patient1@email.com | Patient@123 |
+| **Patient** | patient2@email.com | Patient@123 |
+| **Patient** | patient3@email.com | Patient@123 |
+| **Patient** | patient4@email.com | Patient@123 |
 
 > All seeded doctors are pre-approved. Newly registered doctors start with **pending** status and must be approved by the admin.
 
@@ -179,14 +191,16 @@ hospital-management/
 │   │   ├── doctorController.js
 │   │   ├── patientController.js
 │   │   ├── appointmentController.js
-│   │   └── billingController.js
+│   │   ├── billingController.js
+│   │   └── leaveController.js
 │   ├── routes/
 │   │   ├── authRoutes.js
 │   │   ├── adminRoutes.js
 │   │   ├── doctorRoutes.js
 │   │   ├── patientRoutes.js
 │   │   ├── appointmentRoutes.js
-│   │   └── billingRoutes.js
+│   │   ├── billingRoutes.js
+│   │   └── leaveRoutes.js
 │   ├── middleware/
 │   │   └── authMiddleware.js    # JWT verify, requireRole, requireDoctorApproval
 │   ├── db/
@@ -254,6 +268,15 @@ hospital-management/
 | GET | `/api/admin/pending-doctors` | Admin | Pending approval list |
 | POST | `/api/admin/approve-doctor` | Admin | Approve or reject doctor |
 
+### Leave Requests
+| Method | Endpoint | Access | Description |
+|--------|----------|--------|-------------|
+| POST | `/api/leave/apply` | Doctor | Submit a leave request |
+| GET | `/api/leave/my` | Doctor | View own leave request history |
+| GET | `/api/leave/pending` | Admin | View all pending leave requests |
+| GET | `/api/leave/all` | Admin | View all leave requests |
+| PUT | `/api/leave/:id/approve` | Admin | Approve or reject leave request |
+
 ---
 
 ## 🗄️ Database Collections
@@ -266,6 +289,7 @@ hospital-management/
 | `appointments` | Appointment records linking doctors ↔ patients |
 | `invoices` | Billing records linked to patients |
 | `prescriptions` | Doctor-issued prescriptions |
+| `leave_requests` | Doctor leave applications with approval workflow |
 
 > `users._id` is the shared key. `doctors.user_id` and `patients.user_id` foreign-key back to `users._id`.
 

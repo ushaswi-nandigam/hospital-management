@@ -52,6 +52,8 @@ export async function createIndexes() {
     await database.collection('invoices').createIndex({ patient_id: 1 }).catch(() => {});
     await database.collection('invoices').createIndex({ status: 1 }).catch(() => {});
     await database.collection('medical_records').createIndex({ patient_id: 1 }).catch(() => {});
+    await database.collection('leave_requests').createIndex({ doctor_id: 1 }).catch(() => {});
+    await database.collection('leave_requests').createIndex({ status: 1 }).catch(() => {});
     
     console.log('✅ Database indexes created');
   } catch (error) {

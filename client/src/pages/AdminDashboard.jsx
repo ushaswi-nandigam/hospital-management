@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/index.js';
-import { adminAPI, billingAPI, patientAPI, appointmentAPI } from '../api/index.js';
+import { adminAPI, billingAPI, patientAPI, appointmentAPI, leaveAPI } from '../api/index.js';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -14,6 +14,7 @@ export default function AdminDashboard() {
   const [invoices, setInvoices] = useState([]);
   const [patients, setPatients] = useState([]);
   const [appointments, setAppointments] = useState([]);
+  const [leaveRequests, setLeaveRequests] = useState([]);
   
   const [loading, setLoading] = useState(true);
   const [invoiceForm, setInvoiceForm] = useState({
@@ -25,16 +26,19 @@ export default function AdminDashboard() {
   const [submittingInvoice, setSubmittingInvoice] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [cancelModal, setCancelModal] = useState({ open: false, appointmentId: null });
+  const [cancelReason, setCancelReason] = useState('');
 
   const fetchData = async () => {
     try {
-      const [statsRes, scheduleRes, pendingRes, invoicesRes, patientsRes, appointmentsRes] = await Promise.all([
+      const [statsRes, scheduleRes, pendingRes, invoicesRes, patientsRes, appointmentsRes, leaveRes] = await Promise.all([
         adminAPI.getDashboard(),
         adminAPI.getStaffSchedule(),
         adminAPI.getPendingDoctors(),
         billingAPI.getInvoices(),
         patientAPI.getPatients(),
         appointmentAPI.getAppointments(),
+        leaveAPI.getAllLeaveRequests(),
       ]);
       setStats(statsRes.data);
       setStaffSchedule(scheduleRes.data);
@@ -42,6 +46,7 @@ export default function AdminDashboard() {
       setInvoices(invoicesRes.data);
       setPatients(patientsRes.data);
       setAppointments(appointmentsRes.data);
+      setLeaveRequests(leaveRes.data);
     } catch (error) {
       console.error('Failed to load admin data:', error);
     } finally {
@@ -109,12 +114,21 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleCancelAppointment = async (appointmentId) => {
-    const confirmation = window.confirm('Are you sure you want to cancel this appointment?');
-    if (!confirmation) return;
+  const openCancelModal = (appointmentId) => {
+    setCancelModal({ open: true, appointmentId });
+    setCancelReason('');
+  };
+
+  const handleCancelAppointment = async () => {
+    if (!cancelReason.trim()) {
+      alert('Please provide a reason for cancellation.');
+      return;
+    }
 
     try {
-      await appointmentAPI.cancelAppointment(appointmentId);
+      await appointmentAPI.cancelAppointment(cancelModal.appointmentId, { cancellationReason: cancelReason.trim() });
+      setCancelModal({ open: false, appointmentId: null });
+      setCancelReason('');
       await fetchData();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to cancel appointment');
@@ -127,6 +141,18 @@ export default function AdminDashboard() {
       await fetchData();
     } catch (err) {
       alert(err.response?.data?.error || 'Failed to update doctor availability');
+    }
+  };
+
+  const handleApproveLeave = async (leaveId, action) => {
+    const confirmation = window.confirm(`Are you sure you want to ${action} this leave request?`);
+    if (!confirmation) return;
+
+    try {
+      await leaveAPI.approveLeaveRequest(leaveId, { action });
+      await fetchData();
+    } catch (err) {
+      alert(err.response?.data?.error || `Failed to ${action} leave request`);
     }
   };
 
@@ -203,6 +229,21 @@ export default function AdminDashboard() {
             }`}
           >
             💳 Invoice & Billing History
+          </button>
+          <button
+            onClick={() => setActiveTab('leave-requests')}
+            className={`w-full text-left px-4 py-3 rounded-lg font-medium transition flex items-center justify-between ${
+              activeTab === 'leave-requests'
+                ? 'bg-medical-600 text-white shadow'
+                : 'bg-white hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            🏖️ Leave Requests
+            {leaveRequests.filter(lr => lr.status === 'pending').length > 0 && (
+              <span className="bg-orange-500 text-white text-xs px-2 py-0.5 rounded-full">
+                {leaveRequests.filter(lr => lr.status === 'pending').length}
+              </span>
+            )}
           </button>
           <button
             onClick={() => setActiveTab('create-invoice')}
@@ -354,6 +395,7 @@ export default function AdminDashboard() {
                         <th className="px-4 py-3">Doctor</th>
                         <th className="px-4 py-3">Date & Time</th>
                         <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3">Summary / Reason</th>
                         <th className="px-4 py-3">Notes</th>
                         <th className="px-4 py-3 text-right">Actions</th>
                       </tr>
@@ -383,11 +425,18 @@ export default function AdminDashboard() {
                               {apt.status}
                             </span>
                           </td>
+                          <td className="px-4 py-3 text-gray-600 max-w-xs truncate">
+                            {apt.status === 'completed' && apt.summary ? (
+                              <span title={apt.summary} className="cursor-help">{apt.summary}</span>
+                            ) : apt.status === 'cancelled' && apt.cancellation_reason ? (
+                              <span title={apt.cancellation_reason} className="cursor-help text-red-600">{apt.cancellation_reason}</span>
+                            ) : '-'}
+                          </td>
                           <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{apt.notes || '-'}</td>
                           <td className="px-4 py-3 text-right">
                             {apt.status === 'scheduled' && (
                               <button
-                                onClick={() => handleCancelAppointment(apt.id)}
+                                onClick={() => openCancelModal(apt.id)}
                                 className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-semibold transition"
                               >
                                 Cancel
@@ -465,6 +514,73 @@ export default function AdminDashboard() {
                 </div>
               ) : (
                 <p className="text-gray-500 py-4 text-center">No invoices issued yet.</p>
+              )}
+            </div>
+          )}
+
+          {activeTab === 'leave-requests' && (
+            <div className="card">
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Doctor Leave Requests</h2>
+              {leaveRequests.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-gray-500 text-left bg-gray-50">
+                        <th className="px-4 py-3">Doctor</th>
+                        <th className="px-4 py-3">Specialization</th>
+                        <th className="px-4 py-3">Reason</th>
+                        <th className="px-4 py-3">Start Date</th>
+                        <th className="px-4 py-3">End Date</th>
+                        <th className="px-4 py-3">Status</th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                      {leaveRequests.map((lr) => (
+                        <tr key={lr.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 font-semibold text-gray-700">{lr.doctor_name}</td>
+                          <td className="px-4 py-3 text-gray-600">{lr.specialization}</td>
+                          <td className="px-4 py-3 text-gray-600 max-w-xs truncate">{lr.reason}</td>
+                          <td className="px-4 py-3 text-gray-600">{new Date(lr.start_date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3 text-gray-600">{new Date(lr.end_date).toLocaleDateString()}</td>
+                          <td className="px-4 py-3">
+                            <span className={`px-2.5 py-1 rounded-full text-xs font-semibold ${
+                              lr.status === 'approved'
+                                ? 'bg-green-100 text-green-800'
+                                : lr.status === 'rejected'
+                                ? 'bg-red-100 text-red-800'
+                                : 'bg-yellow-100 text-yellow-800'
+                            }`}>
+                              {lr.status}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right">
+                            {lr.status === 'pending' && (
+                              <div className="flex gap-2 justify-end">
+                                <button
+                                  onClick={() => handleApproveLeave(lr.id, 'approved')}
+                                  className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded text-xs font-semibold transition"
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  onClick={() => handleApproveLeave(lr.id, 'rejected')}
+                                  className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-xs font-semibold transition"
+                                >
+                                  Reject
+                                </button>
+                              </div>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500 bg-gray-50 rounded-lg">
+                  No leave requests found.
+                </div>
               )}
             </div>
           )}
@@ -551,6 +667,54 @@ export default function AdminDashboard() {
           )}
         </main>
       </div>
+
+      {/* Cancel Appointment Modal */}
+      {cancelModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl p-8 w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-bold text-gray-800">Cancel Appointment</h3>
+              <button
+                onClick={() => setCancelModal({ open: false, appointmentId: null })}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none"
+              >
+                &times;
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Cancellation Reason *</label>
+                <textarea
+                  value={cancelReason}
+                  onChange={(e) => setCancelReason(e.target.value)}
+                  className="input-field"
+                  rows="4"
+                  placeholder="Explain why this appointment is being cancelled..."
+                  required
+                />
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setCancelModal({ open: false, appointmentId: null })}
+                  className="flex-1 px-4 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition"
+                >
+                  Back
+                </button>
+                <button
+                  onClick={handleCancelAppointment}
+                  disabled={!cancelReason.trim()}
+                  className="flex-1 px-4 py-2.5 bg-red-500 hover:bg-red-600 text-white font-semibold rounded-lg transition disabled:opacity-50"
+                >
+                  Confirm Cancellation
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

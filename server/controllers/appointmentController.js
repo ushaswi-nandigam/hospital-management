@@ -195,16 +195,28 @@ export const bookAppointment = async (req, res) => {
 export const updateAppointmentStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, summary, cancellationReason } = req.body;
 
-    if (!['scheduled', 'completed', 'cancelled', 'no-show'].includes(status)) {
+    if (!['scheduled', 'completed', 'cancelled'].includes(status)) {
       return res.status(400).json({ error: 'Invalid status' });
     }
 
+    if (status === 'completed' && !summary) {
+      return res.status(400).json({ error: 'Summary is required when completing an appointment' });
+    }
+
+    if (status === 'cancelled' && !cancellationReason) {
+      return res.status(400).json({ error: 'Cancellation reason is required when cancelling an appointment' });
+    }
+
     const db = getDB();
+    const updateFields = { status, updated_at: new Date() };
+    if (summary) updateFields.summary = summary;
+    if (cancellationReason) updateFields.cancellation_reason = cancellationReason;
+
     const result = await db.collection('appointments').findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: { status, updated_at: new Date() } },
+      { $set: updateFields },
       { returnDocument: 'after' }
     );
 
@@ -222,11 +234,16 @@ export const updateAppointmentStatus = async (req, res) => {
 export const cancelAppointment = async (req, res) => {
   try {
     const { id } = req.params;
-    const db = getDB();
+    const { cancellationReason } = req.body;
 
+    if (!cancellationReason) {
+      return res.status(400).json({ error: 'Cancellation reason is required' });
+    }
+
+    const db = getDB();
     const result = await db.collection('appointments').findOneAndUpdate(
       { _id: new ObjectId(id) },
-      { $set: { status: 'cancelled', updated_at: new Date() } },
+      { $set: { status: 'cancelled', cancellation_reason: cancellationReason, updated_at: new Date() } },
       { returnDocument: 'after' }
     );
 
